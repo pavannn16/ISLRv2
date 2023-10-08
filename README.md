@@ -25,6 +25,10 @@ Before Running the Script be sure to change the following paths to your local ma
    csv_file ='/Users/pavan/GIT/ISLRv2/data/train.csv'
    captured_parquet_file = '/Users/pavan/GIT/ISLRv2/captured.parquet'
    ```
+PS:edit here in the app.py code:
+<img width="775" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/a7834283-481e-436d-a7d8-1e7a4551ba58">
+
+
 
 Run the Streamlit app:
   ```bash
