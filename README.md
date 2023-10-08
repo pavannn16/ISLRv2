@@ -32,13 +32,18 @@ The captured sign and prediction will be displayed.
 ## Demo
 
 # Streamlit Interface 
-<img width="1440" alt="image" src="https://github.com/pavannn29/ASL/assets/104923000/9e038e54-ae07-498b-9e84-eff6017d2eef">
+<img width="1434" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/bbae4483-8fbd-4ce5-b040-f9d4b78fa00d">
 
 # Setting the Duration
-<img width="1440" alt="image" src="https://github.com/pavannn29/ASL/assets/104923000/800e7d52-ddfd-4593-bc1d-864250a770c5">
+<img width="1434" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/73d361d1-9a79-4912-8f3c-6b33aa78320c">
 
 # Realtime Prediction
-<img width="1440" alt="image" src="https://github.com/pavannn29/ASL/assets/104923000/686eebba-5428-4a4e-9076-27a912310280">
+<img width="1434" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/951e4224-3a73-43a8-8c83-483b19c35a84">
+
+https://github.com/pavannn29/ISLRv2/assets/104923000/590e49af-ad6f-4382-b45a-90aa2337f427
+
+
+
 
 
 
