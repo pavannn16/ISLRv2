@@ -119,14 +119,6 @@ def load_relevant_data_subset(pq_path):
     n_frames = int(len(data) / ROWS_PER_FRAME)
     data = data.values.reshape(n_frames, ROWS_PER_FRAME, len(data_columns))
     return data.astype(np.float32)
-
-# def get_prediction(prediction_fn, pq_file):
-#     xyz_np = load_relevant_data_subset(pq_file)
-#     prediction = prediction_fn(inputs=xyz_np)
-#     pred = prediction['outputs'].argmax()
-#     sign = ORD2SIGN[pred]
-#     pred_conf = prediction['outputs'][pred]
-#     st.write(f'PREDICTED SIGN:{sign} [{pred}], CONFIDENCE:{pred_conf:0.4}')
     
 def get_prediction(prediction_fn, pq_file):
     xyz_np = load_relevant_data_subset(pq_file)
