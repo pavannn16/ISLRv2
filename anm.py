@@ -227,8 +227,8 @@ if __name__ == "__main__":
     ORD2SIGN = train[['sign_ord', 'sign']].set_index('sign_ord').squeeze().to_dict()
 
     # Streamlit app layout
-    st.title("ASL Sign Language Prediction App")
-    st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction.")
+    st.title("Isolated Sign Language Recognition App")
+    st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction along with the animated visuals of the captured landmarks.")
     duration = st.number_input("Set Duration (in seconds)", min_value=1)
     if st.button("Predict Sign") and duration:
         captured_landmarks = do_capture_loop(xyz, duration)
