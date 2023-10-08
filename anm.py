@@ -207,14 +207,18 @@ def animate_sign_video(sign):
     return animation.to_html5_video()
 
 if __name__ == "__main__":
-    pq_file = '/Users/pavan/MLProjects/ASL/asl-signs/train_landmark_files/2044/635217.parquet'
-    xyz = pd.read_parquet(pq_file)
+    dummy_parquet_skel_file = '/Users/pavan/GIT/ISLRv2/data/239181.parquet'
+    tflite_model = '/Users/pavan/GIT/ISLRv2/models/asl_model.tflite'
+    csv_file ='/Users/pavan/GIT/ISLRv2/data/train.csv'
+    captured_parquet_file = '/Users/pavan/GIT/ISLRv2/captured.parquet'
+
+    xyz = pd.read_parquet(dummy_parquet_skel_file)
 
     # Combine main script and inference code
-    interpreter = tflite.Interpreter('/Users/pavan/MLProjects/ASL/aslmodel/asl_model.tflite')
+    interpreter = tflite.Interpreter(tflite_model)
     found_signatures = list(interpreter.get_signature_list().keys())
     prediction_fn = interpreter.get_signature_runner("serving_default")
-    train = pd.read_csv('/Users/pavan/MLProjects/ASL/asldataset/train.csv')
+    train = pd.read_csv(csv_file)
     # Add ordinally Encoded Sign (assign number to each sign name)
     train['sign_ord'] = train['sign'].astype('category').cat.codes
 
@@ -230,14 +234,7 @@ if __name__ == "__main__":
         captured_landmarks = do_capture_loop(xyz, duration)
         captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
         captured_landmarks_df.to_parquet("captured.parquet")
-        sign = pd.read_parquet('/Users/pavan/MLProjects/ASL/holistic/streamlit/captured.parquet')
+        sign = pd.read_parquet(captured_parquet_file)
         sign.y = sign.y * -1  # Invert the y values
         st.write(animate_sign_video(sign), unsafe_allow_html=True)
         get_prediction(prediction_fn, "captured.parquet")
-
-    # if st.button("Animated Visuals"):
-    #     # Provide the path to the parquet file you want to visualize
-    #     path_to_sign = '/Users/pavan/MLProjects/ASL/holistic/streamlit/captured.parquet'
-    #     sign = pd.read_parquet(path_to_sign)
-    #     sign.y = sign.y * -1  # Invert the y values
-    #     st.write(animate_sign_video(sign), unsafe_allow_html=True)
