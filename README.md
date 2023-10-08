@@ -39,8 +39,8 @@ The captured sign and prediction will be displayed.
 
 # Realtime Prediction
 <img width="1434" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/951e4224-3a73-43a8-8c83-483b19c35a84">
+<img width="1434" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/9fef09da-e5ec-46e5-b800-8d0293a6a163">
 
-https://github.com/pavannn29/ISLRv2/assets/104923000/590e49af-ad6f-4382-b45a-90aa2337f427
 
 
 
