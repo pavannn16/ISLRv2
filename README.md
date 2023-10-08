@@ -9,7 +9,7 @@ To run this app locally, you'll need to install the necessary packages and set u
 1. Clone this repository:
    ```bash
    git clone https://github.com/pavannn29/ISLRv2.git
-   cd ASL
+   cd ISLRv2-main
    
 2.Install the required Python packages:
    ```bash
@@ -17,6 +17,14 @@ To run this app locally, you'll need to install the necessary packages and set u
    ```
 
 ## Usage
+
+Before Running the Script be sure to change the following paths to your local machine path:
+   ```bash
+   dummy_parquet_skel_file = '/Users/pavan/GIT/ISLRv2/data/239181.parquet'
+   tflite_model = '/Users/pavan/GIT/ISLRv2/models/asl_model.tflite'
+   csv_file ='/Users/pavan/GIT/ISLRv2/data/train.csv'
+   captured_parquet_file = '/Users/pavan/GIT/ISLRv2/captured.parquet'
+   ```
 
 Run the Streamlit app:
   ```bash
