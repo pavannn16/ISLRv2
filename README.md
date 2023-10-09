@@ -10,6 +10,12 @@ To run this app locally, you'll need to install the necessary packages and set u
    ```bash
    git clone https://github.com/pavannn29/ISLRv2.git
    cd ISLRv2-main
+   ```
+Optional. Create a Virtual Environment:
+   ```bash
+   python -m venv /path/to/new/virtual/environment/venvname
+   source <venv>/bin/activate
+   ```
    
 2.Install the required Python packages:
    ```bash
