@@ -74,7 +74,7 @@ PS:edit here in the app.py code:
 
  Learn from the given below links:
  ([Signs ASL](https://www.signasl.org))
- ([LifePrint](http://www.lifeprint.com/asl101/pages-signs))
+ ([LifePrint](http://www.lifeprint.com/asl101/pages-layout/topics.htm))
 
 
 
