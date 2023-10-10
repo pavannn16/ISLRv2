@@ -72,6 +72,10 @@ PS:edit here in the app.py code:
 
  Try any one of these and let our model do the prediction!
 
+ Learn from the given below links:
+ ([Signs ASL](https://www.signasl.org))
+ ([LifePrint](http://www.lifeprint.com/asl101/pages-signs))
+
 
 
 Run the Streamlit app:
