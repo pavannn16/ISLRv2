@@ -35,6 +35,7 @@ PS:edit here in the app.py code:
 
 <img width="775" alt="image" src="https://github.com/pavannn29/ISLRv2/assets/104923000/a7834283-481e-436d-a7d8-1e7a4551ba58">
 
+
 Check out the 250 ASL(American Sign Language) Signs before deploying the app:
 
 ```bash
