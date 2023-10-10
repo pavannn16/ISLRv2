@@ -37,6 +37,7 @@ PS:edit here in the app.py code:
 
 Check out the 250 ASL(American Sign Language) Signs before deploying the app:
 
+```bash
 'blow' 'wait' 'cloud' 'bird' 'owie' 'duck' 'minemy' 'lips' 'flower'
  'time' 'vacuum' 'apple' 'puzzle' 'mitten' 'there' 'dry' 'shirt' 'owl'
  'yellow' 'not' 'zipper' 'clean' 'closet' 'quiet' 'have' 'brother' 'clown'
@@ -66,6 +67,7 @@ Check out the 250 ASL(American Sign Language) Signs before deploying the app:
  'bedroom' 'napkin' 'ear' 'toothbrush' 'home' 'pajamas' 'hello'
  'helicopter' 'lamp' 'room' 'dirty' 'chair' 'hat' 'elephant' 'after' 'car'
  'hide' 'goose'
+```
 
  Try any one of these and let our model do the prediction!
 
