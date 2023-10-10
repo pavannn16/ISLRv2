@@ -2,6 +2,15 @@
 
 This Streamlit app captures ASL (American Sign Language) signs using a webcam and predicts the corresponding sign using a TensorFlow Lite model. It visualizes the captured sign and provides real-time predictions with an animated view of the captured landmarks for better visualization.
 
+## Dataset Information:
+
+The signs in the dataset represent 250 of the first concepts taught to infants in any language. The goal is to create an isolated sign recognizer to incorporate into educational games for helping hearing parents of Deaf children learn American Sign Language (ASL). Around 90% of deaf infants are born to hearing parents, many of whom may not know American Sign Language. (kdhe.ks.gov, deafchildren.org). Surrounding Deaf children with sign helps avoid Language Deprivation Syndrome. This syndrome is characterized by a lack of access to naturally occurring language acquisition during the critical language-learning years. It can cause serious impacts on different aspects of their lives, such as relationships, education, and employment.
+Learning American Sign Language (ASL) is as difficult for English speakers as learning Japanese (jstor.org). It takes time and resources that many parents don't have. They want to learn sign language, but it's hard when they are working long hours just to make ends meet.
+
+The Dataset on which our model is trained:
+([Google Dataset](https://www.kaggle.com/competitions/asl-signs/data))
+([Custom Dataset](https://www.kaggle.com/datasets/markwijkhuizen/gislr-dataset-public))
+
 ## Installation and Setup
 
 To run this app locally, you'll need to install the necessary packages and set up the environment:
