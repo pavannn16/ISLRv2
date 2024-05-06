@@ -17,7 +17,7 @@ To run this app locally, you'll need to install the necessary packages and set u
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/pavannn29/ISLRv2.git
+   git clone https://github.com/pavannn16/ISLRv2.git
    cd ISLRv2-main
    ```
 Optional. Create a Virtual Environment:
