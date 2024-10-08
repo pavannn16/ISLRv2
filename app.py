@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
+from gtts import gTTS
+import os
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -121,6 +123,14 @@ def load_relevant_data_subset(pq_path):
     data = data.values.reshape(n_frames, ROWS_PER_FRAME, len(data_columns))
     return data.astype(np.float32)
     
+# def get_prediction(prediction_fn, pq_file):
+#     xyz_np = load_relevant_data_subset(pq_file)
+#     prediction = prediction_fn(inputs=xyz_np)
+#     pred = prediction['outputs'].argmax()
+#     sign_ord = pred.item()
+#     sign = ORD2SIGN[sign_ord]
+#     pred_conf = prediction['outputs'][pred]
+#     st.write(f'PREDICTED SIGN: {sign} [{sign_ord}], CONFIDENCE: {pred_conf:0.4}')
 def get_prediction(prediction_fn, pq_file):
     xyz_np = load_relevant_data_subset(pq_file)
     prediction = prediction_fn(inputs=xyz_np)
@@ -129,6 +139,11 @@ def get_prediction(prediction_fn, pq_file):
     sign = ORD2SIGN[sign_ord]
     pred_conf = prediction['outputs'][pred]
     st.write(f'PREDICTED SIGN: {sign} [{sign_ord}], CONFIDENCE: {pred_conf:0.4}')
+    
+    # Convert text to speech using gTTS
+    tts = gTTS(text=f'The predicted sign is {sign}', lang='en')
+    tts.save("predicted_sign.mp3")
+    os.system("mpg321 predicted_sign.mp3")
 
 def animate_sign_video(sign):
     def get_hand_points(hand):
