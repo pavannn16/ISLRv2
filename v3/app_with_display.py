@@ -57,6 +57,52 @@ def create_frame_landmark_df(results, frame, xyz):
     landmarks = landmarks.assign(frame=frame)
     return landmarks
 
+def capture_video(duration, filename="captured_video.avi"):
+    """Captures a video locally for the specified duration."""
+    cap = cv2.VideoCapture(0)  # Open the default webcam
+    if not cap.isOpened():
+        st.error("Error opening webcam. Please check your camera connection.")
+        return
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for saving the video
+    out = cv2.VideoWriter(filename, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
+
+    start_time = time.time()
+    while (time.time() - start_time) < duration:
+        ret, frame = cap.read()
+        if not ret:
+            st.error("Error capturing video frame.")
+            break
+        out.write(frame)
+
+    cap.release()
+    out.release()
+    st.success("Video captured successfully!")
+    return filename
+
+def process_video(video_path):
+    """Processes the captured video file."""
+    all_landmarks = []
+    frame = 0
+    with mp_holistic.Holistic(
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+    ) as holistic:
+        cap = cv2.VideoCapture(video_path)
+        while cap.isOpened():
+            ret, image = cap.read()
+            if not ret:
+                break
+
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            results = holistic.process(image)
+            landmarks = create_frame_landmark_df(results, frame, xyz)
+            all_landmarks.append(landmarks)
+            frame += 1
+
+        cap.release()
+        return all_landmarks
+
 def load_relevant_data_subset(pq_path):
     ROWS_PER_FRAME = 543  # number of landmarks per frame
     data_columns = ['x', 'y', 'z']
@@ -74,9 +120,11 @@ def get_prediction(prediction_fn, pq_file):
     pred_conf = prediction['outputs'][pred]
     st.write(f'PREDICTED SIGN: {sign} [{sign_ord}], CONFIDENCE: {pred_conf:0.4}')
     
-    # Convert text to speech using gTTS and play with Streamlit's audio component
+    # Convert text to speech using gTTS
     tts = gTTS(text=f'The predicted sign is {sign}', lang='en')
-    st.audio(tts.save("predicted_sign.mp3"), format="audio/mpeg")
+    tts.save("predicted_sign.mp3")
+    os.system("mpg321 predicted_sign.mp3")
+
 
 def animate_sign_video(sign):
     def get_hand_points(hand):
@@ -147,24 +195,6 @@ def animate_sign_video(sign):
 
     return animation.to_html5_video()
 
-def process_image(image_bytes):
-    """Processes the image from the camera input."""
-    all_landmarks = []
-    frame = 0
-    with mp_holistic.Holistic(
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5
-    ) as holistic:
-        # Convert image bytes to OpenCV format
-        image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        results = holistic.process(image)
-        landmarks = create_frame_landmark_df(results, frame, xyz)
-        all_landmarks.append(landmarks)
-
-    return all_landmarks
-
 def download_file(url):
     """Downloads a file from a given URL and saves it locally."""
     local_filename = url.split('/')[-1]  # Get filename from URL
@@ -175,8 +205,9 @@ def download_file(url):
                 f.write(chunk)
     return local_filename
 
+
 if __name__ == "__main__":
-    # Raw GitHub URLs for your files (Make sure to update with your repo)
+    #Raw GitHub URLs for your files (Make sure to update with your repo)
     dummy_parquet_skel_file_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/239181.parquet'
     tflite_model_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/models/asl_model.tflite'
     csv_file_url ='https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/train.csv'
@@ -189,6 +220,8 @@ if __name__ == "__main__":
         download_file(tflite_model_url)
     if not os.path.exists("train.csv"):
         download_file(csv_file_url)
+
+    xyz = pd.read_parquet("239181.parquet")
 
     # Combine main script and inference code
     interpreter = tflite.Interpreter(model_path="asl_model.tflite")
@@ -204,21 +237,20 @@ if __name__ == "__main__":
 
     # Streamlit app layout
     st.title("Isolated Sign Language Recognition App")
-    st.write("Capture a sign using your webcam.")
+    st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction along with the animated visuals of the captured landmarks.")
+    duration = st.number_input("Set Duration (in seconds)", min_value=1)
+    if st.button("Predict Sign") and duration:
+        captured_video_path = capture_video(duration)
+        if captured_video_path:
+            captured_landmarks = process_video(captured_video_path)
+            if captured_landmarks:
+                captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
+                captured_landmarks_df.to_parquet(captured_parquet_file)
+                sign = pd.read_parquet(captured_parquet_file)
+                sign.y = sign.y * -1
 
-    image_bytes = st.camera_input("Capture Sign")
-    if image_bytes is not None:
-        # Process the captured image
-        captured_landmarks = process_image(image_bytes.getvalue())
-        if captured_landmarks:
-            captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
-            captured_landmarks_df.to_parquet(captured_parquet_file)
-            sign = pd.read_parquet(captured_parquet_file)
-            sign.y = sign.y * -1
+                # Display animated video
+                st.write(animate_sign_video(sign), unsafe_allow_html=True)
 
-            # Display animated video
-            st.write(animate_sign_video(sign), unsafe_allow_html=True)
-
-            # Make prediction
-            get_prediction(prediction_fn, captured_parquet_file) 
-
+                # Make prediction
+                get_prediction(prediction_fn, captured_parquet_file) 
