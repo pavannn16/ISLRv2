@@ -5,7 +5,8 @@ import cv2
 import mediapipe as mp
 import pandas as pd
 import time
-import tensorflow.lite as tflite
+# import tensorflow.lite as tflite
+import tflite_runtime.interpreter as tflite
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
