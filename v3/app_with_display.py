@@ -57,40 +57,6 @@ def create_frame_landmark_df(results, frame, xyz):
     landmarks = landmarks.assign(frame=frame)
     return landmarks
 
-def do_capture_loop(xyz, duration):
-    all_landmarks = []
-    start_time = time.time()
-
-    cap = cv2.VideoCapture(0)
-    video_placeholder = st.empty()
-    capturing_message = st.empty()
-    capturing_message.write("Capturing")
-
-    frame = 0
-    with mp_holistic.Holistic( # Initialize Mediapipe Holistic here 
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5) as holistic:
-        while cap.isOpened() and (time.time() - start_time) < duration:
-            frame += 1
-            success, image = cap.read()
-            if not success:
-                print("Ignoring empty camera frame.")
-                continue
-
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            video_placeholder.image(image, channels="RGB", caption="Camera Feed") # Display camera feed
-
-            results = holistic.process(image)
-            landmarks = create_frame_landmark_df(results, frame, xyz)
-            all_landmarks.append(landmarks)
-
-    cap.release()
-    #out.release()
-    video_placeholder.empty()
-    capturing_message.empty()
-
-    return all_landmarks #, video_path
-
 def load_relevant_data_subset(pq_path):
     ROWS_PER_FRAME = 543  # number of landmarks per frame
     data_columns = ['x', 'y', 'z']
@@ -181,6 +147,24 @@ def animate_sign_video(sign):
 
     return animation.to_html5_video()
 
+def process_image(image_bytes):
+    """Processes the image from the camera input."""
+    all_landmarks = []
+    frame = 0
+    with mp_holistic.Holistic(
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
+    ) as holistic:
+        # Convert image bytes to OpenCV format
+        image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        results = holistic.process(image)
+        landmarks = create_frame_landmark_df(results, frame, xyz)
+        all_landmarks.append(landmarks)
+
+    return all_landmarks
+
 def download_file(url):
     """Downloads a file from a given URL and saves it locally."""
     local_filename = url.split('/')[-1]  # Get filename from URL
@@ -206,8 +190,6 @@ if __name__ == "__main__":
     if not os.path.exists("train.csv"):
         download_file(csv_file_url)
 
-    xyz = pd.read_parquet("239181.parquet")
-
     # Combine main script and inference code
     interpreter = tflite.Interpreter(model_path="asl_model.tflite")
     found_signatures = list(interpreter.get_signature_list().keys())
@@ -222,20 +204,21 @@ if __name__ == "__main__":
 
     # Streamlit app layout
     st.title("Isolated Sign Language Recognition App")
-    st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction along with the animated visuals of the captured landmarks.")
-    duration = st.number_input("Set Duration (in seconds)", min_value=1)
-    if st.button("Predict Sign") and duration:
-        captured_landmarks = do_capture_loop(xyz, duration) # Modified
-        captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
-        captured_landmarks_df.to_parquet(captured_parquet_file)
-        sign = pd.read_parquet(captured_parquet_file)
-        sign.y = sign.y * -1 
+    st.write("Capture a sign using your webcam.")
 
-        # Display raw and animated videos side-by-side
-        #col1, col2 = st.columns(2) 
-        #with col1:
-        #    st.video(video_path)  # Display the raw video
-        #with col2:
-        st.write(animate_sign_video(sign), unsafe_allow_html=True)  
+    image_bytes = st.camera_input("Capture Sign")
+    if image_bytes is not None:
+        # Process the captured image
+        captured_landmarks = process_image(image_bytes.getvalue())
+        if captured_landmarks:
+            captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
+            captured_landmarks_df.to_parquet(captured_parquet_file)
+            sign = pd.read_parquet(captured_parquet_file)
+            sign.y = sign.y * -1
 
-        get_prediction(prediction_fn, captured_parquet_file)
+            # Display animated video
+            st.write(animate_sign_video(sign), unsafe_allow_html=True)
+
+            # Make prediction
+            get_prediction(prediction_fn, captured_parquet_file) 
+
