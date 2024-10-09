@@ -57,51 +57,27 @@ def create_frame_landmark_df(results, frame, xyz):
     landmarks = landmarks.assign(frame=frame)
     return landmarks
 
-def capture_video(duration, filename="captured_video.avi"):
-    """Captures a video locally for the specified duration."""
-    cap = cv2.VideoCapture(0)  # Open the default webcam
-    if not cap.isOpened():
-        st.error("Error opening webcam. Please check your camera connection.")
-        return
-
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for saving the video
-    out = cv2.VideoWriter(filename, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
-
-    start_time = time.time()
-    while (time.time() - start_time) < duration:
-        ret, frame = cap.read()
-        if not ret:
-            st.error("Error capturing video frame.")
-            break
-        out.write(frame)
-
-    cap.release()
-    out.release()
-    st.success("Video captured successfully!")
-    return filename
-
-def process_video(video_path):
-    """Processes the captured video file."""
+def process_video_frames(image_bytes, duration):
+    """Processes a video stream (simulated) frame by frame."""
     all_landmarks = []
     frame = 0
-    with mp_holistic.Holistic(
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5
-    ) as holistic:
-        cap = cv2.VideoCapture(video_path)
-        while cap.isOpened():
-            ret, image = cap.read()
-            if not ret:
-                break
+    start_time = time.time()
 
+    with mp_holistic.Holistic(
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
+    ) as holistic:
+        while (time.time() - start_time) < duration:
+            # Convert image bytes to OpenCV format
+            image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
             results = holistic.process(image)
             landmarks = create_frame_landmark_df(results, frame, xyz)
             all_landmarks.append(landmarks)
             frame += 1
 
-        cap.release()
-        return all_landmarks
+    return all_landmarks
 
 def load_relevant_data_subset(pq_path):
     ROWS_PER_FRAME = 543  # number of landmarks per frame
@@ -207,7 +183,7 @@ def download_file(url):
 
 
 if __name__ == "__main__":
-    #Raw GitHub URLs for your files (Make sure to update with your repo)
+    # Raw GitHub URLs for your files (Make sure to update with your repo)
     dummy_parquet_skel_file_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/239181.parquet'
     tflite_model_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/models/asl_model.tflite'
     csv_file_url ='https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/train.csv'
@@ -239,18 +215,36 @@ if __name__ == "__main__":
     st.title("Isolated Sign Language Recognition App")
     st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction along with the animated visuals of the captured landmarks.")
     duration = st.number_input("Set Duration (in seconds)", min_value=1)
-    if st.button("Predict Sign") and duration:
-        captured_video_path = capture_video(duration)
-        if captured_video_path:
-            captured_landmarks = process_video(captured_video_path)
-            if captured_landmarks:
-                captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
-                captured_landmarks_df.to_parquet(captured_parquet_file)
-                sign = pd.read_parquet(captured_parquet_file)
-                sign.y = sign.y * -1
+    image_bytes = st.camera_input("Capture Sign", key="capture_sign_video")
+    if image_bytes is not None:
+        # Process the video stream (simulated)
+        captured_landmarks = process_video_frames(image_bytes.getvalue(), duration)
+        if captured_landmarks:
+            captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
+            captured_landmarks_df.to_parquet(captured_parquet_file)
+            sign = pd.read_parquet(captured_parquet_file)
+            sign.y = sign.y * -1
 
-                # Display animated video
-                st.write(animate_sign_video(sign), unsafe_allow_html=True)
+            # Display animated video
+            st.write(animate_sign_video(sign), unsafe_allow_html=True)
 
-                # Make prediction
-                get_prediction(prediction_fn, captured_parquet_file) 
+            # Make prediction
+            get_prediction(prediction_fn, captured_parquet_file) 
+
+    # JavaScript to simulate video capture
+    st.markdown(
+        """
+        <script>
+        const videoInput = document.getElementById('capture_sign_video'); 
+        if (videoInput) {
+            const captureButton = document.createElement('button');
+            captureButton.textContent = 'Capture';
+            captureButton.onclick = () => {
+                videoInput.click(); // Trigger the st.camera_input click event
+            };
+            videoInput.parentNode.insertBefore(captureButton, videoInput); 
+        }
+        </script>
+        """,
+        unsafe_allow_html=True,
+    )
