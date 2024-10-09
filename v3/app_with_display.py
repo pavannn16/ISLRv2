@@ -213,23 +213,19 @@ if __name__ == "__main__":
 
     # Streamlit app layout
     st.title("Isolated Sign Language Recognition App")
-    st.write("Set the duration (in seconds) and press 'Predict Sign' to capture your sign.")
-    duration = st.number_input("Set Capture Duration (in seconds)", min_value=1)
+    st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction along with the animated visuals of the captured landmarks.")
+    duration = st.number_input("Set Duration (in seconds)", min_value=1)
     image_bytes = st.camera_input("Capture Sign", key="capture_sign_video")
+    if st.button("Predict Sign") and duration and image_bytes is not None:
+        captured_landmarks = process_video_frames(image_bytes.getvalue(), duration)
+        if captured_landmarks:
+            captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
+            captured_landmarks_df.to_parquet(captured_parquet_file)
+            sign = pd.read_parquet(captured_parquet_file)
+            sign.y = sign.y * -1
 
-    # Predict Button (triggers capture and prediction)
-    if st.button("Predict Sign") and duration:
-        if image_bytes is not None:
-            # Process the video stream (simulated)
-            captured_landmarks = process_video_frames(image_bytes.getvalue(), duration)
-            if captured_landmarks:
-                captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
-                captured_landmarks_df.to_parquet(captured_parquet_file)
-                sign = pd.read_parquet(captured_parquet_file)
-                sign.y = sign.y * -1
+            # Display animated video
+            st.write(animate_sign_video(sign), unsafe_allow_html=True)
 
-                # Display animated video
-                st.write(animate_sign_video(sign), unsafe_allow_html=True)
-
-                # Make prediction
-                get_prediction(prediction_fn, captured_parquet_file)
+            # Make prediction
+            get_prediction(prediction_fn, captured_parquet_file)
