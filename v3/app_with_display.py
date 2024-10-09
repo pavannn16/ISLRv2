@@ -13,71 +13,72 @@ from IPython.display import HTML
 from gtts import gTTS
 import os
 import requests
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import av
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_holistic = mp.solutions.holistic
 
-def create_frame_landmark_df(results, frame, xyz):
-    """
-    Takes the results from mediapipe and creates a dataframe of the landmarks
-    """
-    # for having values and rows for every landmark index
-    xyz_skel = xyz[['type', 'landmark_index']].drop_duplicates().reset_index(drop=True).copy()
-    face = pd.DataFrame()
-    pose = pd.DataFrame()
-    left_hand = pd.DataFrame()
-    right_hand = pd.DataFrame()
+# Global variable to store all the landmarks
+captured_landmarks = []
 
-    if results.face_landmarks is not None:
-        for i, point in enumerate(results.face_landmarks.landmark):
-            face.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
-    if results.pose_landmarks is not None:
-        for i, point in enumerate(results.pose_landmarks.landmark):
-            pose.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
-    if results.left_hand_landmarks is not None:
-        for i, point in enumerate(results.left_hand_landmarks.landmark):
-            left_hand.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
-    if results.right_hand_landmarks is not None:
-        for i, point in enumerate(results.right_hand_landmarks.landmark):
-            right_hand.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
+class VideoProcessor(VideoProcessorBase):
+    def __init__(self, xyz):
+        self.xyz = xyz
+        self.start_time = None
+        self.duration = None
 
-    face = face.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='face')
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        global captured_landmarks  # Access the global variable
+        image = frame.to_ndarray(format="bgr24")
+        results = self.process_frame(image)
+        landmarks = self.create_frame_landmark_df(results, image)
+        captured_landmarks.append(landmarks)  # Append landmarks to the global list
+        return av.VideoFrame.from_ndarray(image, format="bgr24")
 
-    pose = pose.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='pose')
+    def process_frame(self, image):
+        with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+            return holistic.process(image)
 
-    left_hand = left_hand.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='left_hand')
+    def create_frame_landmark_df(self, results, frame):
+        """
+        Takes the results from mediapipe and creates a dataframe of the landmarks
+        """
+        # for having values and rows for every landmark index
+        xyz_skel = self.xyz[['type', 'landmark_index']].drop_duplicates().reset_index(drop=True).copy()
+        face = pd.DataFrame()
+        pose = pd.DataFrame()
+        left_hand = pd.DataFrame()
+        right_hand = pd.DataFrame()
 
-    right_hand = right_hand.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='right_hand')
+        if results.face_landmarks is not None:
+            for i, point in enumerate(results.face_landmarks.landmark):
+                face.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
+        if results.pose_landmarks is not None:
+            for i, point in enumerate(results.pose_landmarks.landmark):
+                pose.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
+        if results.left_hand_landmarks is not None:
+            for i, point in enumerate(results.left_hand_landmarks.landmark):
+                left_hand.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
+        if results.right_hand_landmarks is not None:
+            for i, point in enumerate(results.right_hand_landmarks.landmark):
+                right_hand.loc[i, ['x', 'y', 'z']] = [point.x, point.y, point.z]
 
-    landmarks = pd.concat([face, pose, left_hand, right_hand]).reset_index(drop=True)
-    # So that skel will have landmarks even if they do not exist
-    landmarks = xyz_skel.merge(landmarks, on=['type', 'landmark_index'], how='left')
-    # to have actual unique frames
-    landmarks = landmarks.assign(frame=frame)
-    return landmarks
+        face = face.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='face')
 
-def process_video_frames(image_bytes, duration):
-    """Processes a video stream (simulated) frame by frame."""
-    all_landmarks = []
-    frame = 0
-    start_time = time.time()
+        pose = pose.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='pose')
 
-    with mp_holistic.Holistic(
-        min_detection_confidence=0.5,
-        min_tracking_confidence=0.5
-    ) as holistic:
-        while (time.time() - start_time) < duration:
-            # Convert image bytes to OpenCV format
-            image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        left_hand = left_hand.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='left_hand')
 
-            results = holistic.process(image)
-            landmarks = create_frame_landmark_df(results, frame, xyz)
-            all_landmarks.append(landmarks)
-            frame += 1
+        right_hand = right_hand.reset_index().rename(columns={'index': 'landmark_index'}).assign(type='right_hand')
 
-    return all_landmarks
+        landmarks = pd.concat([face, pose, left_hand, right_hand]).reset_index(drop=True)
+        # So that skel will have landmarks even if they do not exist
+        landmarks = xyz_skel.merge(landmarks, on=['type', 'landmark_index'], how='left')
+        # to have actual unique frames
+        landmarks = landmarks.assign(frame=frame)
+        return landmarks
 
 def load_relevant_data_subset(pq_path):
     ROWS_PER_FRAME = 543  # number of landmarks per frame
@@ -215,9 +216,14 @@ if __name__ == "__main__":
     st.title("Isolated Sign Language Recognition App")
     st.write("Set the duration (in seconds) and press the 'Predict Sign' button to capture your sign and get the prediction along with the animated visuals of the captured landmarks.")
     duration = st.number_input("Set Duration (in seconds)", min_value=1)
-    image_bytes = st.camera_input("Capture Sign", key="capture_sign_video")
-    if st.button("Predict Sign") and duration and image_bytes is not None:
-        captured_landmarks = process_video_frames(image_bytes.getvalue(), duration)
+
+    webrtc_ctx = webrtc_streamer(
+        key="example",
+        video_processor_factory=lambda: VideoProcessor(xyz),
+        async_processing=True,
+    )
+
+    if st.button("Predict Sign") and duration and webrtc_ctx.state.playing:
         if captured_landmarks:
             captured_landmarks_df = pd.concat(captured_landmarks).reset_index(drop=True)
             captured_landmarks_df.to_parquet(captured_parquet_file)
@@ -228,4 +234,5 @@ if __name__ == "__main__":
             st.write(animate_sign_video(sign), unsafe_allow_html=True)
 
             # Make prediction
-            get_prediction(prediction_fn, captured_parquet_file)
+            get_prediction(prediction_fn, captured_parquet_file) 
+        captured_landmarks.clear() # clear the list after each prediction
