@@ -184,29 +184,10 @@ def animate_sign_video(sign):
 
     return animation.to_html5_video()
 
-def load_parquet_data(url):
+def fetch_data(url):
     response = requests.get(url)
-    if response.status_code == 200:
-        return pd.read_parquet(StringIO(response.content))
-    else:
-        st.error("Failed to load data from GitHub.")
-        return None
-
-def load_tflite_model(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return tflite.Interpreter(model_content=response.content)
-    else:
-        st.error("Failed to load TFLite model from GitHub.")
-        return None
-
-def load_csv_data(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return pd.read_csv(StringIO(response.text))
-    else:
-        st.error("Failed to load CSV data from GitHub.")
-        return None
+    response.raise_for_status()
+    return response.content
 
 if __name__ == "__main__":
     dummy_parquet_skel_file_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/239181.parquet'
@@ -214,10 +195,10 @@ if __name__ == "__main__":
     csv_file_url ='https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/train.csv'
     captured_parquet_file_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/shammers.parquet'
 
-    dummy_parquet_skel_file = load_parquet_data(dummy_parquet_skel_file_url)
-    tflite_model = load_tflite_model(tflite_model_url)
-    csv_file = load_csv_data(csv_file_url)
-    captured_parquet_file = load_parquet_data(captured_parquet_file_url)
+    dummy_parquet_skel_file = fetch_data(dummy_parquet_skel_file_url)
+    tflite_model = fetch_data(tflite_model_url)
+    csv_file = fetch_data(csv_file_url)
+    captured_parquet_file = fetch_data(captured_parquet_file_url)
 
     xyz = pd.read_parquet(dummy_parquet_skel_file)
 
