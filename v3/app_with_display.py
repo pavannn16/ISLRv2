@@ -13,7 +13,6 @@ from IPython.display import HTML
 from gtts import gTTS
 import os
 import requests
-from io import StringIO
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -109,11 +108,9 @@ def get_prediction(prediction_fn, pq_file):
     pred_conf = prediction['outputs'][pred]
     st.write(f'PREDICTED SIGN: {sign} [{sign_ord}], CONFIDENCE: {pred_conf:0.4}')
     
-    # Convert text to speech using gTTS
+    # Convert text to speech using gTTS and play with Streamlit's audio component
     tts = gTTS(text=f'The predicted sign is {sign}', lang='en')
-    tts.save("https://raw.githubusercontent.com/pavannn16/ISLRv2/main/predicted_sign.mp3")
-    os.system("mpg321 https://raw.githubusercontent.com/pavannn16/ISLRv2/main/predicted_sign.mp3")
-
+    st.audio(tts.save("predicted_sign.mp3"), format="audio/mpeg")
 
 def animate_sign_video(sign):
     def get_hand_points(hand):
@@ -184,29 +181,38 @@ def animate_sign_video(sign):
 
     return animation.to_html5_video()
 
-def fetch_data(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.content
+def download_file(url):
+    """Downloads a file from a given URL and saves it locally."""
+    local_filename = url.split('/')[-1]  # Get filename from URL
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()  # Raise an exception if there's an error
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    return local_filename
 
 if __name__ == "__main__":
+    # Raw GitHub URLs for your files (Make sure to update with your repo)
     dummy_parquet_skel_file_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/239181.parquet'
     tflite_model_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/models/asl_model.tflite'
     csv_file_url ='https://raw.githubusercontent.com/pavannn16/ISLRv2/main/data/train.csv'
-    captured_parquet_file_url = 'https://raw.githubusercontent.com/pavannn16/ISLRv2/main/shammers.parquet'
+    captured_parquet_file = "shammers.parquet"  # Keep this local
 
-    dummy_parquet_skel_file = fetch_data(dummy_parquet_skel_file_url)
-    tflite_model = fetch_data(tflite_model_url)
-    csv_file = fetch_data(csv_file_url)
-    captured_parquet_file = fetch_data(captured_parquet_file_url)
+    # Download the necessary files (if they don't exist locally)
+    if not os.path.exists("239181.parquet"):
+        download_file(dummy_parquet_skel_file_url)
+    if not os.path.exists("asl_model.tflite"):
+        download_file(tflite_model_url)
+    if not os.path.exists("train.csv"):
+        download_file(csv_file_url)
 
-    xyz = pd.read_parquet(dummy_parquet_skel_file)
+    xyz = pd.read_parquet("239181.parquet")
 
     # Combine main script and inference code
-    interpreter = tflite.Interpreter(tflite_model)
+    interpreter = tflite.Interpreter(model_path="asl_model.tflite")
     found_signatures = list(interpreter.get_signature_list().keys())
     prediction_fn = interpreter.get_signature_runner("serving_default")
-    train = pd.read_csv(csv_file)
+    train = pd.read_csv("train.csv")
     # Add ordinally Encoded Sign (assign number to each sign name)
     train['sign_ord'] = train['sign'].astype('category').cat.codes
 
@@ -232,4 +238,4 @@ if __name__ == "__main__":
         #with col2:
         st.write(animate_sign_video(sign), unsafe_allow_html=True)  
 
-        get_prediction(prediction_fn, captured_parquet_file) 
+        get_prediction(prediction_fn, captured_parquet_file)
