@@ -209,11 +209,11 @@ if __name__ == "__main__":
 
     xyz = pd.read_parquet("239181.parquet")
 
-    # Combine main script and inference code
-    interpreter = tflite.Interpreter(tflite_model)
+     # Combine main script and inference code
+    interpreter = tflite.Interpreter(model_path="asl_model.tflite")
     found_signatures = list(interpreter.get_signature_list().keys())
     prediction_fn = interpreter.get_signature_runner("serving_default")
-    train = pd.read_csv(csv_file)
+    train = pd.read_csv("train.csv")
     # Add ordinally Encoded Sign (assign number to each sign name)
     train['sign_ord'] = train['sign'].astype('category').cat.codes
 
