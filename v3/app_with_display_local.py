@@ -109,8 +109,8 @@ def get_prediction(prediction_fn, pq_file):
     
     # Convert text to speech using gTTS
     tts = gTTS(text=f'The predicted sign is {sign}', lang='en')
-    tts.save("https://github.com/pavannn16/ISLRv2/blob/9f6ee46cf6be7d269d80e40744ad155669516572/predicted_sign.mp3")
-    os.system("mpg321 https://github.com/pavannn16/ISLRv2/blob/9f6ee46cf6be7d269d80e40744ad155669516572/predicted_sign.mp3")
+    tts.save("predicted_sign.mp3")
+    os.system("mpg321 predicted_sign.mp3")
 
 
 def animate_sign_video(sign):
@@ -183,10 +183,10 @@ def animate_sign_video(sign):
     return animation.to_html5_video()
 
 if __name__ == "__main__":
-    dummy_parquet_skel_file = 'https://github.com/pavannn16/ISLRv2/blob/9f6ee46cf6be7d269d80e40744ad155669516572/data/239181.parquet'
-    tflite_model = 'https://github.com/pavannn16/ISLRv2/blob/9f6ee46cf6be7d269d80e40744ad155669516572/models/asl_model.tflite'
-    csv_file ='https://github.com/pavannn16/ISLRv2/blob/9f6ee46cf6be7d269d80e40744ad155669516572/data/train.csv'
-    captured_parquet_file = 'https://github.com/pavannn16/ISLRv2/blob/9f6ee46cf6be7d269d80e40744ad155669516572/shammers.parquet'
+    dummy_parquet_skel_file = '/Users/pavan/GIT/ISLRv2/data/239181.parquet'
+    tflite_model = '/Users/pavan/GIT/ISLRv2/models/asl_model.tflite'
+    csv_file ='/Users/pavan/GIT/ISLRv2/data/train.csv'
+    captured_parquet_file = '/Users/pavan/GIT/ISLRv2/shammers.parquet'
 
     xyz = pd.read_parquet(dummy_parquet_skel_file)
 
