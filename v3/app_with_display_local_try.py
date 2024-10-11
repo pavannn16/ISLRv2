@@ -75,7 +75,7 @@ def do_capture_loop(xyz, duration):
     all_landmarks = []
     start_time = time.time()
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     video_placeholder = st.empty()
     capturing_message = st.empty()
     capturing_message.write("Capturing")
